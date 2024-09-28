@@ -90,6 +90,11 @@ app.MapPost("/products", async (Product product, HttpClient client) =>
         var content = new StringContent(productJson, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync($"https://api.escuelajs.co/api/v1/products", content);
         response.EnsureSuccessStatusCode();
+
+        // Opzionale: puoi deserializzare la risposta
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var createdProduct = JsonSerializer.Deserialize<Product>(responseBody);
+
         return Results.Ok(new { message = "Product created successfully" });
     }
     catch (HttpRequestException ex)
