@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
-using PizzaStore.DB;
+using ProductStore.DB;
+using System.Net.Http;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,8 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FakeProducts API", Description = "The list of product that you want!", Version = "v1" });
+     c.SwaggerDoc("v1", new OpenApiInfo { 
+        Title = "FakeProducts API", 
+        Description = "The list of product that you want!", 
+        Version = "v1" });
 });
+
+// Aggiungi HttpClient al contenitore dei servizi
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -22,13 +30,111 @@ if (app.Environment.IsDevelopment())
    });
 }
 
-// Tutte le route che usiamo
+// Tutte le route che usiamo 
 app.MapGet("/", () => "Hello World!");
+//(a parte la home, le altre sono API di prova che usavamo per vedere i vari collegamenti iniziali)
+/*
 app.MapGet("/pizzas/{id}", (int id) => PizzaDB.GetPizza(id));
 app.MapGet("/pizzas", () => PizzaDB.GetPizzas());
 app.MapPost("/pizzas", (Pizza pizza) => PizzaDB.CreatePizza(pizza));
 app.MapPut("/pizzas", (Pizza pizza) => PizzaDB.UpdatePizza(pizza));
 app.MapDelete("/pizzas/{id}", (int id) => PizzaDB.RemovePizza(id));
+*/
+
+// Ottieni il prodotto da un'API esterna tramite id
+app.MapGet("/products/{id}", async (int id, HttpClient client) =>
+{
+    try
+    {
+        var response = await client.GetAsync($"https://api.escuelajs.co/api/v1/products/{id}");
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return Results.NotFound(new { message = $"Product with ID {id} not found" });
+        }
+
+        response.EnsureSuccessStatusCode();
+        var productJson = await response.Content.ReadAsStringAsync();
+        var product = JsonSerializer.Deserialize<Product>(productJson);
+        return Results.Ok(product);
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error fetching product");
+    }
+});
+
+// Ottieni tutti i prodotti da un'API esterna
+app.MapGet("/products", async (HttpClient client) =>
+{
+    try
+    {
+        var response = await client.GetAsync($"https://api.escuelajs.co/api/v1/products");
+        response.EnsureSuccessStatusCode();
+        var productJson = await response.Content.ReadAsStringAsync();
+        var products = JsonSerializer.Deserialize<List<Product>>(productJson);
+        return Results.Ok(products);
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error fetching products");
+    }
+});
+
+// Crea un nuovo prodotto tramite un'API esterna
+app.MapPost("/products", async (Product product, HttpClient client) =>
+{
+    try
+    {
+        var productJson = JsonSerializer.Serialize(product);
+        var content = new StringContent(productJson, System.Text.Encoding.UTF8, "application/json");
+        var response = await client.PostAsync($"https://api.escuelajs.co/api/v1/products", content);
+        response.EnsureSuccessStatusCode();
+        return Results.Ok(new { message = "Product created successfully" });
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error creating product");
+    }
+});
+
+// Aggiorna un prodotto tramite un'API esterna
+app.MapPut("/products", async (Product product, HttpClient client) =>
+{
+    try
+    {
+        var productJson = JsonSerializer.Serialize(product);
+        var content = new StringContent(productJson, System.Text.Encoding.UTF8, "application/json");
+        var response = await client.PutAsync($"https://api.escuelajs.co/api/v1/products/{product.Id}", content);
+        response.EnsureSuccessStatusCode();
+        return Results.Ok(new { message = "Product updated successfully" });
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error updating product");
+    }
+});
+
+// Elimina un prodotto tramite un'API esterna
+app.MapDelete("/products/{id}", async (int id, HttpClient client) =>
+{
+    try
+    {
+        var response = await client.DeleteAsync($"https://api.escuelajs.co/api/v1/products/{id}");
+        
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return Results.NotFound(new { message = $"Product with ID {id} not found" });
+        }
+
+        response.EnsureSuccessStatusCode();
+        return Results.Ok(new { message = "Product deleted successfully" });
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error deleting product");
+    }
+});
 
 app.Run();
 
