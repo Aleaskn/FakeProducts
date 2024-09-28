@@ -1,51 +1,61 @@
-namespace PizzaStore.DB; 
+namespace ProductStore.DB; 
+using System.Text.Json.Serialization;
+ /* Da adesso questa classe verrà utilizzata per rappresentare il modello di dati dei prodotti, 
+ senza nessuna logica di gestione interna, poiché questa sarà demandata alle API esterne.
+*/
+public class Product
+{
+    [JsonPropertyName("id")] // Assicurati che questo campo esista nel JSON
+    public int Id { get; set; }
 
- public record Pizza 
- {
-   public int Id {get; set;} 
-   public string ? Name { get; set; }
- }
+    [JsonPropertyName("title")] // Verifica che questo campo esista nel JSON
+    public string? Title { get; set; }
+}
 
- public class PizzaDB
+
+ /* Fake db che ora non mi serve più
+ public class ProductsDB
  {
-   private static List<Pizza> _pizzas = new List<Pizza>()
+   private static List<Product> _product = new List<Product>()
    {
-     new Pizza{ Id=1, Name="Montemagno, Pizza shaped like a great mountain" },
-     new Pizza{ Id=2, Name="The Galloway, Pizza shaped like a submarine, silent but deadly"},
-     new Pizza{ Id=3, Name="The Noring, Pizza shaped like a Viking helmet, where's the mead"} 
+     new Product{ Id=1, Title="Montemagno, Pizza shaped like a great mountain" },
+     new Product{ Id=2, Title="The Galloway, Pizza shaped like a submarine, silent but deadly"},
+     new Product{ Id=3, Title="The Noring, Pizza shaped like a Viking helmet, where's the mead"} 
    };
 
-   public static List<Pizza> GetPizzas() 
+
+   public static List<Product> GetProducts() 
    {
-     return _pizzas;
+     return _product;
    } 
 
-   public static Pizza ? GetPizza(int id) 
+   public static Product ? GetProduct(int id) 
    {
-     return _pizzas.SingleOrDefault(pizza => pizza.Id == id);
+     return _product.SingleOrDefault(pizza => pizza.Id == id);
    } 
 
-   public static Pizza CreatePizza(Pizza pizza) 
+   public static Product CreateProduct(Product product) 
    {
-     _pizzas.Add(pizza);
-     return pizza;
+     _product.Add(product);
+     return product;
    }
 
-   public static Pizza UpdatePizza(Pizza update) 
+   public static Product UpdateProduct(Product update) 
    {
-     _pizzas = _pizzas.Select(pizza =>
+     _product = _product.Select(product =>
      {
-       if (pizza.Id == update.Id)
+       if (product.Id == update.Id)
        {
-         pizza.Name = update.Name;
+         product.Title = update.Title;
        }
-       return pizza;
+       return product;
      }).ToList();
      return update;
    }
 
-   public static void RemovePizza(int id)
+   public static void RemoveProduct(int id)
    {
-     _pizzas = _pizzas.FindAll(pizza => pizza.Id != id).ToList();
+     _product = _product.FindAll(product => product.Id != id).ToList();
    }
  }
+ */
