@@ -104,14 +104,30 @@ app.MapPost("/products", async (Product product, HttpClient client) =>
 });
 
 // Aggiorna un prodotto tramite un'API esterna
-app.MapPut("/products", async (Product product, HttpClient client) =>
+app.MapPut("/products/{id}", async (int id, Product product, HttpClient client) =>
 {
     try
     {
-        var productJson = JsonSerializer.Serialize(product);
+
+        // Imposta l'ID del prodotto
+        product.Id = id;
+
+        // Serializza solo le proprietà richieste perché sennò prenderebbe tutto e riporterebbe un errore
+        var productJson = JsonSerializer.Serialize(new
+        {
+            title = product.Title,
+            price = product.Price
+        });
+
         var content = new StringContent(productJson, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PutAsync($"https://api.escuelajs.co/api/v1/products/{product.Id}", content);
         response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            return Results.Problem(detail: errorContent, statusCode: (int)response.StatusCode, title: "Error updating product");
+        }
         return Results.Ok(new { message = "Product updated successfully" });
     }
     catch (HttpRequestException ex)
