@@ -15,6 +15,17 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1" });
 });
 
+// Abilita CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Aggiungi HttpClient al contenitore dei servizi
 builder.Services.AddHttpClient();
 
@@ -29,6 +40,9 @@ if (app.Environment.IsDevelopment())
       c.SwaggerEndpoint("/swagger/v1/swagger.json", "FakeProducts API V1");
    });
 }
+
+// Usa CORS
+app.UseCors("AllowAll");
 
 // Tutte le route che usiamo 
 app.MapGet("/", () => "Hello World!");
@@ -82,18 +96,14 @@ app.MapGet("/products", async (HttpClient client) =>
 });
 
 // Crea un nuovo prodotto tramite un'API esterna
-app.MapPost("/products", async (Product product, HttpClient client) =>
+app.MapPost("/products", async (Product newProduct, HttpClient client) =>
 {
     try
     {
-        var productJson = JsonSerializer.Serialize(product);
+        var productJson = JsonSerializer.Serialize(newProduct);
         var content = new StringContent(productJson, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync($"https://api.escuelajs.co/api/v1/products", content);
         response.EnsureSuccessStatusCode();
-
-        // Opzionale: puoi deserializzare la risposta
-        var responseBody = await response.Content.ReadAsStringAsync();
-        var createdProduct = JsonSerializer.Deserialize<Product>(responseBody);
 
         return Results.Ok(new { message = "Product created successfully" });
     }
@@ -102,6 +112,8 @@ app.MapPost("/products", async (Product product, HttpClient client) =>
         return Results.Problem(detail: ex.Message, statusCode: 500, title: "Error creating product");
     }
 });
+
+
 
 // Aggiorna un prodotto tramite un'API esterna
 app.MapPut("/products/{id}", async (int id, Product product, HttpClient client) =>

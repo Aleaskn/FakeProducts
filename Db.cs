@@ -18,6 +18,9 @@ public class Product {
 
     [JsonPropertyName("category")]
     public Category Category { get; set; }
+    
+    [JsonPropertyName("categoryId")]
+    public int CategoryId { get; set; } 
 
     [JsonPropertyName("images")]
     public List<string>? Images { get; set; }
