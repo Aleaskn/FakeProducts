@@ -84,7 +84,7 @@ Un JWT (JSON Web Token) è una stringa che rappresenta in modo sicuro le informa
 */
 
 // Endpoint che permette al frontend di inviare i dati di un nuovo utente
-app.MapPost("/users", async (UserRegistration newUser, HttpClient client) =>
+app.MapPost("/users/", async (UserRegistration newUser, HttpClient client) =>
 {
     try
     {
@@ -107,7 +107,7 @@ app.MapPost("/users", async (UserRegistration newUser, HttpClient client) =>
         }
        
         // Invia la richiesta POST all'API esterna
-        var response = await client.PostAsync("https://api.escuelajs.co/api/v1/users", content);
+        var response = await client.PostAsync("https://api.escuelajs.co/api/v1/users/", content);
         response.EnsureSuccessStatusCode();
 
         // Ottieni la risposta e deserializza il risultato
